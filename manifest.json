@@ -1,0 +1,16 @@
+{
+      "name": "Study Smart Fun",
+      "short_name": "StudyFun",
+      "start_url": "/StudySmart/",
+      "display": "standalone",
+      "background_color": "#ff6f61",
+      "theme_color": "#ff6f61",
+      "icons": [
+        {
+          "src": "icon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+Show in sidebar
