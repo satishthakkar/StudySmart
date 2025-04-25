@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Study Fun</title>
+  <base href="/StudySmart/">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <link rel="manifest" href="/StudySmart/manifest.json">
+  <meta name="theme-color" content="#ff6f61">
+  <meta name="mobile-web-app-capable" content="yes">
+  <style>
+    body {
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #ff6f61, #ffcc00, #00cc99);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: all 0.5s ease;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+      animation: bounceIn 0.8s ease;
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0.9); opacity: 0; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    h1 {
+      color: #ff6f61;
+      font-size: 2.5em;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2);
+    }
+    .timer {
+      font-size: 2.5em;
+      color: #333;
+      text-align: center;
+      background: linear-gradient(90deg, #ffcc00, #00cc99);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: inset 0 5px 10px rgba(0, 0, 0, 0.2);
+      margin: 10px 0;
+    }
+    .btn {
+      border-radius: 25px;
+      padding: 15px 30px;
+      font-size: 1.2em;
+      transition: all 0.3s ease;
+      background: #ff6f61;
+      border: none;
+      color: white;
+    }
+    .btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      background: #ff8e53;
+    }
+    .parent-view {
+      background: #e0f7fa;
+      padding: 15px;
+      border-radius: 15px;
+      margin-top: 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      animation: slideIn 0.5s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .history-table th, .history-table td {
+      text-align: center;
+      vertical-align: middle;
+    }
+    canvas {
+      max-width: 100%;
+      border-radius: 15px;
+      background: #fff;
+      padding: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.5s ease;
+    }
+    .activity-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+    .activity-section:hover {
+      transform: translateY(-5px);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Smart Study Fun</h1>
+    <div class="mb-3 activity-section">
+      <h3>Add Your Name</h3>
+      <input type="text" id="studentName" class="form-control mb-2" placeholder="Enter your name">
+      <button id="addStudentBtn" class="btn">Add Name</button>
+      <p id="displayStudent" class="mt-2"></p>
+    </div>
+    <div class="mb-3 activity-section">
+      <h3>Add Subjects</h3>
+      <input type="text" id="newSubject" class="form-control mb-2" placeholder="Enter subject (e.g., Math)">
+      <button id="addSubjectBtn" class="btn">Add Subject</button>
+      <div id="subjectList" class="mt-2"></div>
+    </div>
+    <div class="mb-3 activity-section">
+      <h3>Study Time</h3>
+      <p class="timer" id="studyTimer">00:00:00</p>
+      <button id="stopStudyBtn" class="btn" disabled>Stop Study</button>
+    </div>
+    <div class="mb-3 activity-section">
+      <h3>Play Time</h3>
+      <p class="timer" id="playTimer">00:00:00</p>
+      <button id="startPlayBtn" class="btn">Start Play</button>
+      <button id="stopPlayBtn" class="btn" disabled>Stop Play</button>
+    </div>
+    <div class="mb-3 activity-section">
+      <h3>Fun Activities</h3>
+      <select id="extraActivity" class="form-select mb-2">
+        <option value="Drawing">Drawing</option>
+        <option value="Singing">Singing</option>
+        <option value="Dancing">Dancing</option>
+        <option value="Other">Other</option>
+      </select>
+      <p class="timer" id="extraTimer">00:00:00</p>
+      <button id="startExtraBtn" class="btn">Start Fun</button>
+      <button id="stopExtraBtn" class="btn" disabled>Stop Fun</button>
+    </div>
+    <div class="mb-3">
+      <h3>Reason for Less Study</h3>
+      <input type="text" id="reasonInput" class="form-control" placeholder="Why did you study less? (e.g., Played a lot)">
+      <button id="saveReasonBtn" class="btn mt-2">Save Reason</button>
+    </div>
+    <div class="mb-3">
+      <h3>Today's Progress</h3>
+      <p>Study Time: <span id="todayStudy" style="color: #ff6f61;">0</span> hours</p>
+      <p>Play Time: <span id="todayPlay" style="color: #00cc99;">0</span> hours</p>
+      <p>Fun Time: <span id="todayExtra" style="color: #ffcc00;">0</span> hours</p>
+      <p>Missing Time: <span id="deficit" style="color: #ef5350;">0</span> hours</p>
+      <canvas id="progressChart" height="100"></canvas>
+    </div>
+    <div class="mb-3">
+      <h3>Past Records</h3>
+      <table class="table table-bordered history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Study Goal</th>
+            <th>Studied</th>
+            <th>Played</th>
+            <th>Fun</th>
+            <th>Missing</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody id="historyTable"></tbody>
+      </table>
+    </div>
+    <div class="mb-3 parent-view">
+      <h3>Parent Check</h3>
+      <p>Total Study: <span id="totalStudy" style="color: #ff6f61;">0</span> hours</p>
+      <p>Total Play: <span id="totalPlay" style="color: #00cc99;">0</span> hours</p>
+      <p>Total Fun: <span id="totalExtra" style="color: #ffcc00;">0</span> hours</p>
+      <p>Total Missing: <span id="totalDeficit" style="color: #ef5350;">0</span> hours</p>
+      <button id="resetParentBtn" class="btn" style="background: #ffcc00;">Reset All</button>
+    </div>
+  </div>
+  <script>
+    let activeTimer = null;
+    let studyGoal = 6;
+    let todayStudy = 0, todayPlay = 0, todayExtra = 0, deficit = 0;
+    let totalStudy = 0, totalPlay = 0, totalExtra = 0;
+    let studySeconds = 0, playSeconds = 0, extraSeconds = 0;
+    let subjects = JSON.parse(localStorage.getItem('subjects')) || [];
+    let subjectTimes = JSON.parse(localStorage.getItem('subjectTimes')) || {};
+    let studentName = localStorage.getItem('studentName') || '';
+    let history = JSON.parse(localStorage.getItem('studyData'))?.history || [];
+    let studyTimerInterval = null, playTimerInterval = null, extraTimerInterval = null;
+    let worker = null;
+    let timerInterval = null; // Single interval for all timers
+
+    // Load data
+    if (localStorage.getItem('studyData')) {
+      const data = JSON.parse(localStorage.getItem('studyData'));
+      todayStudy = data.todayStudy || 0;
+      todayPlay = data.todayPlay || 0;
+      todayExtra = data.todayExtra || 0;
+      deficit = data.deficit || 0;
+      totalStudy = data.totalStudy || 0;
+      totalPlay = data.totalPlay || 0;
+      totalExtra = data.totalExtra || 0;
+      studySeconds = data.studySeconds || 0;
+      playSeconds = data.playSeconds || 0;
+      extraSeconds = data.extraSeconds || 0;
+      history = data.history || [];
+      subjects = data.subjects || [];
+      subjectTimes = data.subjectTimes || {};
+      studentName = data.studentName || '';
+    }
+
+    // Initialize Web Worker
+    if (typeof(Worker) !== "undefined") {
+      worker = new Worker(URL.createObjectURL(new Blob([`
+        let studySeconds = ${studySeconds};
+        let playSeconds = ${playSeconds};
+        let extraSeconds = ${extraSeconds};
+        let activeTimer = "${activeTimer || ''}";
+
+        self.onmessage = function(e) {
+          if (e.data.type === 'start') {
+            activeTimer = e.data.timer;
+          } else if (e.data.type === 'stop') {
+            activeTimer = '';
+          } else if (e.data.type === 'update') {
+            studySeconds = e.data.study;
+            playSeconds = e.data.play;
+            extraSeconds = e.data.extra;
+          }
+          postMessage({ study: studySeconds, play: playSeconds, extra: extraSeconds, active: activeTimer });
+        };
+
+        setInterval(() => {
+          if (activeTimer === 'study') {
+            studySeconds++;
+          } else if (activeTimer === 'play') {
+            playSeconds++;
+          } else if (activeTimer === 'extra') {
+            extraSeconds++;
+          }
+          postMessage({ study: studySeconds, play: playSeconds, extra: extraSeconds, active: activeTimer });
+        }, 1000);
+      `], { type: 'text/javascript' })));
+
+      worker.onmessage = function(e) {
+        studySeconds = e.data.study;
+        playSeconds = e.data.play;
+        extraSeconds = e.data.extra;
+        activeTimer = e.data.active;
+        document.getElementById('studyTimer').textContent = formatTime(studySeconds);
+        document.getElementById('playTimer').textContent = formatTime(playSeconds);
+        document.getElementById('extraTimer').textContent = formatTime(extraSeconds);
+      };
+    } else {
+      console.log('Web Workers not supported');
+    }
+
+    // Update UI
+    function updateUI() {
+      document.getElementById('todayStudy').textContent = (todayStudy / 3600).toFixed(2);
+      document.getElementById('todayPlay').textContent = (todayPlay / 3600).toFixed(2);
+      document.getElementById('todayExtra').textContent = (todayExtra / 3600).toFixed(2);
+      document.getElementById('deficit').textContent = (deficit / 3600).toFixed(2);
+      document.getElementById('totalStudy').textContent = (totalStudy / 3600).toFixed(2);
+      document.getElementById('totalPlay').textContent = (totalPlay / 3600).toFixed(2);
+      document.getElementById('totalExtra').textContent = (totalExtra / 3600).toFixed(2);
+      document.getElementById('totalDeficit').textContent = (deficit / 3600).toFixed(2);
+      document.getElementById('displayStudent').textContent = studentName ? `Hey ${studentName}!` : '';
+      updateSubjectList();
+      updateChart();
+      updateHistoryTable();
+    }
+
+    // Format time
+    function formatTime(seconds) {
+      const hours = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Stop all timers
+    function stopAllTimers() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      if (studyTimerInterval) {
+        clearInterval(studyTimerInterval);
+        studyTimerInterval = null;
+      }
+      if (playTimerInterval) {
+        clearInterval(playTimerInterval);
+        playTimerInterval = null;
+      }
+      if (extraTimerInterval) {
+        clearInterval(extraTimerInterval);
+        extraTimerInterval = null;
+      }
+      document.getElementById('stopStudyBtn').disabled = true;
+      document.getElementById('startPlayBtn').disabled = false;
+      document.getElementById('stopPlayBtn').disabled = true;
+      document.getElementById('startExtraBtn').disabled = false;
+      document.getElementById('stopExtraBtn').disabled = true;
+      document.getElementById('studyTimer').textContent = formatTime(studySeconds);
+      document.getElementById('playTimer').textContent = formatTime(playSeconds);
+      document.getElementById('extraTimer').textContent = formatTime(extraSeconds);
+      document.querySelectorAll('.start-study-subject').forEach(btn => btn.disabled = false);
+      activeTimer = null;
+      if (worker) {
+        worker.postMessage({ type: 'stop' });
+      }
+    }
+
+    // Add student
+    document.getElementById('addStudentBtn').addEventListener('click', () => {
+      const studentInput = document.getElementById('studentName').value.trim();
+      if (studentInput) {
+        studentName = studentInput;
+        localStorage.setItem('studentName', studentName);
+        document.getElementById('studentName').value = '';
+        updateUI();
+      } else {
+        alert('Please enter your name!');
+      }
+    });
+
+    // Add subject and update list with Start Study buttons
+    document.getElementById('addSubjectBtn').addEventListener('click', () => {
+      const subjectInput = document.getElementById('newSubject').value.trim();
+      if (subjectInput && !subjects.includes(subjectInput)) {
+        subjects.push(subjectInput);
+        subjectTimes[subjectInput] = 0;
+        localStorage.setItem('subjects', JSON.stringify(subjects));
+        localStorage.setItem('subjectTimes', JSON.stringify(subjectTimes));
+        document.getElementById('newSubject').value = '';
+        updateSubjectList();
+      } else if (!subjectInput) {
+        alert('Please enter a subject!');
+      } else {
+        alert('Subject already added!');
+      }
+    });
+
+    // Update subject list with Start Study buttons
+    function updateSubjectList() {
+      const subjectList = document.getElementById('subjectList');
+      subjectList.innerHTML = subjects.map(subject => `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <p style="margin: 0;">${subject} (${(subjectTimes[subject] / 3600).toFixed(2)} hrs)</p>
+          <button class="btn start-study-subject" data-subject="${subject}" style="padding: 5px 10px; font-size: 0.9em;">Start Study</button>
+        </div>
+      `).join('');
+
+      // Add event listeners to Start Study buttons
+      document.querySelectorAll('.start-study-subject').forEach(button => {
+        button.addEventListener('click', () => {
+          const selectedSubject = button.getAttribute('data-subject');
+          startStudy(selectedSubject);
+        });
+      });
+    }
+
+    // Start study function
+    function startStudy(selectedSubject) {
+      if (activeTimer) {
+        alert('Another timer is already running! Please stop it first.');
+        return;
+      }
+      if (worker) {
+        stopAllTimers();
+        activeTimer = 'study';
+        worker.postMessage({ type: 'start', timer: 'study' });
+        document.getElementById('stopStudyBtn').disabled = false;
+        localStorage.setItem('activeTimer', 'study');
+        document.querySelectorAll('.start-study-subject').forEach(btn => btn.disabled = true);
+        if (!timerInterval) {
+          timerInterval = setInterval(() => {
+            todayStudy++;
+            totalStudy++;
+            subjectTimes[selectedSubject] = (subjectTimes[selectedSubject] || 0) + 1;
+            updateUI();
+          }, 1000);
+        }
+      } else {
+        console.log('Worker not initialized');
+      }
+    }
+
+    // Stop study timer
+    document.getElementById('stopStudyBtn').addEventListener('click', () => {
+      if (worker) {
+        stopAllTimers();
+        saveData();
+        localStorage.removeItem('activeTimer');
+      }
+    });
+
+    // Start play timer
+    document.getElementById('startPlayBtn').addEventListener('click', () => {
+      if (activeTimer) {
+        alert('Another timer is already running! Please stop it first.');
+        return;
+      }
+      if (worker) {
+        stopAllTimers();
+        activeTimer = 'play';
+        worker.postMessage({ type: 'start', timer: 'play' });
+        document.getElementById('startPlayBtn').disabled = true;
+        document.getElementById('stopPlayBtn').disabled = false;
+        localStorage.setItem('activeTimer', 'play');
+        if (!timerInterval) {
+          timerInterval = setInterval(() => {
+            todayPlay++;
+            totalPlay++;
+            updateUI();
+          }, 1000);
+        }
+      } else {
+        console.log('Worker not initialized');
+      }
+    });
+
+    // Stop play timer
+    document.getElementById('stopPlayBtn').addEventListener('click', () => {
+      if (worker) {
+        stopAllTimers();
+        saveData();
+        localStorage.removeItem('activeTimer');
+      }
+    });
+
+    // Start extra activity timer
+    document.getElementById('startExtraBtn').addEventListener('click', () => {
+      if (activeTimer) {
+        alert('Another timer is already running! Please stop it first.');
+        return;
+      }
+      if (worker) {
+        stopAllTimers();
+        activeTimer = 'extra';
+        worker.postMessage({ type: 'start', timer: 'extra' });
+        document.getElementById('startExtraBtn').disabled = true;
+        document.getElementById('stopExtraBtn').disabled = false;
+        localStorage.setItem('activeTimer', 'extra');
+        if (!timerInterval) {
+          timerInterval = setInterval(() => {
+            todayExtra++;
+            totalExtra++;
+            updateUI();
+          }, 1000);
+        }
+      } else {
+        console.log('Worker not initialized');
+      }
+    });
+
+    // Stop extra activity timer
+    document.getElementById('stopExtraBtn').addEventListener('click', () => {
+      if (worker) {
+        stopAllTimers();
+        saveData();
+        localStorage.removeItem('activeTimer');
+      }
+    });
+
+    // Save reason
+    document.getElementById('saveReasonBtn').addEventListener('click', () => {
+      const reason = document.getElementById('reasonInput').value.trim();
+      if (reason) {
+        const today = new Date().toISOString().split('T')[0];
+        const existingEntry = history.find(entry => entry.date === today);
+        if (existingEntry) {
+          existingEntry.reason = reason;
+        } else {
+          history.push({
+            date: today,
+            goal: studyGoal,
+            studied: (todayStudy / 3600).toFixed(2),
+            played: (todayPlay / 3600).toFixed(2),
+            extra: (todayExtra / 3600).toFixed(2),
+            deficit: (deficit / 3600).toFixed(2),
+            reason: reason,
+            subjects: subjectTimes,
+            student: studentName
+          });
+        }
+        document.getElementById('reasonInput').value = '';
+        saveData();
+      } else {
+        alert('Please enter a reason!');
+      }
+    });
+
+    // Parent reset
+    document.getElementById('resetParentBtn').addEventListener('click', () => {
+      if (confirm('Reset everything?')) {
+        todayStudy = 0;
+        todayPlay = 0;
+        todayExtra = 0;
+        deficit = 0;
+        totalStudy = 0;
+        totalPlay = 0;
+        totalExtra = 0;
+        studySeconds = 0;
+        playSeconds = 0;
+        extraSeconds = 0;
+        subjects = [];
+        subjectTimes = {};
+        studentName = '';
+        history = [];
+        document.getElementById('studyTimer').textContent = '00:00:00';
+        document.getElementById('playTimer').textContent = '00:00:00';
+        document.getElementById('extraTimer').textContent = '00:00:00';
+        localStorage.clear();
+        if (worker) worker.postMessage({ type: 'update', study: 0, play: 0, extra: 0 });
+        updateUI();
+      }
+    });
+
+    // Save data and handle deficit
+    function saveData() {
+      const today = new Date().toISOString().split('T')[0];
+      const todayGoal = studyGoal * 3600;
+      if (todayStudy < todayGoal) {
+        const prevDeficit = JSON.parse(localStorage.getItem('studyData'))?.deficit || 0;
+        deficit = prevDeficit + (todayGoal - todayStudy);
+      }
+      const existingEntry = history.find(entry => entry.date === today);
+      if (!existingEntry) {
+        history.push({
+          date: today,
+          goal: studyGoal,
+          studied: (todayStudy / 3600).toFixed(2),
+          played: (todayPlay / 3600).toFixed(2),
+          extra: (todayExtra / 3600).toFixed(2),
+          deficit: (deficit / 3600).toFixed(2),
+          reason: '',
+          subjects: subjectTimes,
+          student: studentName
+        });
+      } else {
+        existingEntry.goal = studyGoal;
+        existingEntry.studied = (todayStudy / 3600).toFixed(2);
+        existingEntry.played = (todayPlay / 3600).toFixed(2);
+        existingEntry.extra = (todayExtra / 3600).toFixed(2);
+        existingEntry.deficit = (deficit / 3600).toFixed(2);
+        existingEntry.subjects = subjectTimes;
+        existingEntry.student = studentName;
+      }
+      localStorage.setItem('studyData', JSON.stringify({
+        todayStudy, todayPlay, todayExtra, deficit, totalStudy, totalPlay, totalExtra,
+        studySeconds, playSeconds, extraSeconds, history, subjects, subjectTimes, studentName
+      }));
+      if (worker) worker.postMessage({ type: 'update', study: studySeconds, play: playSeconds, extra: extraSeconds });
+      updateUI();
+    }
+
+    // Update history table
+    function updateHistoryTable() {
+      const tbody = document.getElementById('historyTable');
+      tbody.innerHTML = '';
+      history.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${entry.date}</td>
+          <td>${entry.goal}</td>
+          <td>${entry.studied}</td>
+          <td>${entry.played}</td>
+          <td>${entry.extra}</td>
+          <td>${entry.deficit}</td>
+          <td>${entry.reason || 'No reason'} (Name: ${entry.student || 'Not set'})</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Chart
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Study Goal', 'Study', 'Play', 'Fun', 'Missing'],
+        datasets: [{
+          label: 'Hours',
+          data: [studyGoal, todayStudy / 3600, todayPlay / 3600, todayExtra / 3600, deficit / 3600],
+          backgroundColor: ['#ff6f61', '#ff8e53', '#00cc99', '#ffcc00', '#ef5350']
+        }]
+      },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    function updateChart() {
+      chart.data.datasets[0].data = [studyGoal, todayStudy / 3600, todayPlay / 3600, todayExtra / 3600, deficit / 3600];
+      chart.update();
+    }
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/StudySmart/service-worker.js')
+        .then(() => console.log('Service Worker Registered'))
+        .catch(err => console.error('Service Worker Error:', err));
+    }
+
+    // Resume timer on page load
+    window.addEventListener('load', () => {
+      if (localStorage.getItem('activeTimer') === 'study' && !timerInterval && worker) {
+        document.getElementById('stopStudyBtn').disabled = false;
+        document.querySelectorAll('.start-study-subject').forEach(btn => btn.disabled = true);
+        activeTimer = 'study';
+        worker.postMessage({ type: 'start', timer: 'study' });
+      } else if (localStorage.getItem('activeTimer') === 'play' && !timerInterval && worker) {
+        document.getElementById('startPlayBtn').click();
+      } else if (localStorage.getItem('activeTimer') === 'extra' && !timerInterval && worker) {
+        document.getElementById('startExtraBtn').click();
+      }
+      updateUI();
+    });
+
+    // Handle visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && worker) {
+        worker.postMessage({ type: 'update', study: studySeconds, play: playSeconds, extra: extraSeconds });
+      }
+    });
+  </script>
+</body>
+</html>
